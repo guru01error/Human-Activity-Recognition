@@ -6,22 +6,35 @@ from src.camera import Camera
 from src.predictor import ActivityPredictor
 from src.ui import draw_ui
 
+
 # Load Predictor
 predictor = ActivityPredictor()
 
-# Store Last 5 Predictions
+# Store Recent Predictions
 prediction_history = deque(maxlen=10)
+
+# Default Values
+stable_activity = "Detecting..."
+confidence = 0.0
 
 # MediaPipe Pose
 mp_pose = mp.solutions.pose
 mp_draw = mp.solutions.drawing_utils
-pose = mp_pose.Pose()
+
+pose = mp_pose.Pose(
+    min_detection_confidence=0.5,
+    min_tracking_confidence=0.5
+)
 
 # Camera
 camera = Camera()
 
-cv2.namedWindow("AI Human Activity Recognition System", cv2.WINDOW_NORMAL)
-cv2.resizeWindow("AI Human Activity Recognition System", 1200, 700)
+# Window
+window_name = "AI Human Activity Recognition System"
+
+cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
+cv2.resizeWindow(window_name, 1200, 700)
+
 
 while True:
 
@@ -30,7 +43,10 @@ while True:
     if not ret:
         break
 
+    # Convert BGR → RGB
     rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+    # Detect Pose
     results = pose.process(rgb)
 
     if results.pose_landmarks:
@@ -46,7 +62,11 @@ while True:
         landmarks = []
 
         for lm in results.pose_landmarks.landmark:
-            landmarks.extend([lm.x, lm.y, lm.z])
+            landmarks.extend([
+                lm.x,
+                lm.y,
+                lm.z
+            ])
 
         # Predict Activity
         activity, confidence = predictor.predict(landmarks)
@@ -55,17 +75,32 @@ while True:
         prediction_history.append(activity)
 
         # Majority Voting
-        stable_activity = Counter(prediction_history).most_common(1)[0][0]
-
-        # Draw Dashboard
-        dashboard = draw_ui(frame, stable_activity, confidence)
+        stable_activity = Counter(
+            prediction_history
+        ).most_common(1)[0][0]
 
     else:
-      dashboard = draw_ui(frame, stable_activity, confidence)
 
-    cv2.imshow("AI Human Activity Recognition System", dashboard)
+        # No person detected
+        stable_activity = "No Person Detected"
+        confidence = 0.0
 
+    # Draw Dashboard
+    dashboard = draw_ui(
+        frame,
+        stable_activity,
+        confidence
+    )
+
+    # Show Result
+    cv2.imshow(window_name, dashboard)
+
+    # Press Q to Exit
     if cv2.waitKey(1) & 0xFF == ord("q"):
         break
 
+
+# Release Resources
 camera.release()
+pose.close()
+cv2.destroyAllWindows()

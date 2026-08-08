@@ -1,5 +1,7 @@
 import cv2
 import numpy as np
+from PIL import Image, ImageDraw, ImageFont
+
 
 def draw_ui(frame, activity, confidence=None):
 
@@ -8,101 +10,117 @@ def draw_ui(frame, activity, confidence=None):
     panel_width = 220
 
     # Create Dashboard
-    dashboard = np.zeros((height, width + panel_width, 3), dtype=np.uint8)
+    dashboard = np.zeros(
+        (height, width + panel_width, 3),
+        dtype=np.uint8
+    )
 
-    # Camera (Left Side)
+    # Camera - Left Side
     dashboard[:, :width] = frame
 
     # Dashboard Background
     dashboard[:, width:] = (35, 35, 35)
 
     # Divider Line
-    cv2.line(dashboard, (width, 0), (width, height), (120, 120, 120), 2)
+    cv2.line(
+        dashboard,
+        (width, 0),
+        (width, height),
+        (120, 120, 120),
+        2
+    )
+
+    # Convert OpenCV image to PIL
+    pil_image = Image.fromarray(
+        cv2.cvtColor(dashboard, cv2.COLOR_BGR2RGB)
+    )
+
+    draw = ImageDraw.Draw(pil_image)
+
+    # Times New Roman
+    font_path = r"C:\Windows\Fonts\times.ttf"
+
+    title_font = ImageFont.truetype(font_path, 22)
+    label_font = ImageFont.truetype(font_path, 18)
+    activity_font = ImageFont.truetype(font_path, 24)
+    confidence_font = ImageFont.truetype(font_path, 21)
+    exit_font = ImageFont.truetype(font_path, 16)
 
     # Title
-    cv2.putText(
-        dashboard,
+    draw.text(
+        (width + 15, 12),
         "AI DASHBOARD",
-        (width + 15, 35),
-        cv2.FONT_HERSHEY_SIMPLEX,
-        0.65,
-        (0, 255, 255),
-        2
+        font=title_font,
+        fill=(255, 255, 0)
     )
 
-    # Activity
-    cv2.putText(
-        dashboard,
+    # Activity Label
+    draw.text(
+        (width + 15, 55),
         "Activity",
-        (width + 15, 80),
-        cv2.FONT_HERSHEY_SIMPLEX,
-        0.55,
-        (180, 180, 180),
-        2
+        font=label_font,
+        fill=(180, 180, 180)
     )
 
-    cv2.putText(
-        dashboard,
-        activity,
-        (width + 15, 110),
-        cv2.FONT_HERSHEY_SIMPLEX,
-        0.8,
-        (0, 255, 0),
-        2
+    # Activity Value
+    draw.text(
+        (width + 15, 82),
+        str(activity),
+        font=activity_font,
+        fill=(0, 255, 0)
     )
 
     # Confidence
     if confidence is not None:
 
-        cv2.putText(
-            dashboard,
+        draw.text(
+            (width + 15, 125),
             "Confidence",
-            (width + 15, 155),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.55,
-            (180, 180, 180),
-            2
+            font=label_font,
+            fill=(180, 180, 180)
         )
 
-        cv2.putText(
-            dashboard,
+        draw.text(
+            (width + 15, 152),
             f"{confidence:.1f}%",
-            (width + 15, 185),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.7,
-            (255, 255, 255),
-            2
+            font=confidence_font,
+            fill=(255, 255, 255)
         )
 
         # Progress Bar Background
         cv2.rectangle(
             dashboard,
-            (width + 15, 205),
-            (width + 175, 220),
+            (width + 15, 190),
+            (width + 175, 205),
             (80, 80, 80),
             -1
         )
 
         # Progress Bar
-        bar = int((confidence / 100) * 160)
+        bar = int(
+            max(0, min(float(confidence), 100)) / 100 * 160
+        )
 
         cv2.rectangle(
             dashboard,
-            (width + 15, 205),
-            (width + 15 + bar, 220),
+            (width + 15, 190),
+            (width + 15 + bar, 205),
             (0, 255, 0),
             -1
         )
 
-    # Exit
-    cv2.putText(
-        dashboard,
+    # Exit Text
+    draw.text(
+        (width + 15, height - 32),
         "Press Q to Exit",
-        (width + 15, height - 20),
-        cv2.FONT_HERSHEY_SIMPLEX,
-        0.5,
-        (0, 255, 255),
-        1
+        font=exit_font,
+        fill=(255, 255, 0)
+    )
+
+    # Convert PIL back to OpenCV
+    dashboard = cv2.cvtColor(
+        np.array(pil_image),
+        cv2.COLOR_RGB2BGR
     )
 
     return dashboard
