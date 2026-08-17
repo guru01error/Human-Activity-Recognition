@@ -18,10 +18,10 @@ os.makedirs("dataset", exist_ok=True)
 
 csv_file = os.path.join("dataset", f"{activity}.csv")
 
-# MediaPipe Pose
-mp_pose = mp.solutions.pose
+# MediaPipe Pose 
+mp_pose = mp.solutions.pose # type: ignore
 pose = mp_pose.Pose()
-mp_draw = mp.solutions.drawing_utils
+mp_draw = mp.solutions.drawing_utils # type: ignore
 
 # Open Camera
 cap = cv2.VideoCapture(0)
