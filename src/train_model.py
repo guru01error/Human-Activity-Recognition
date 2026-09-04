@@ -70,3 +70,33 @@ os.makedirs("models", exist_ok=True)
 joblib.dump(model, "models/activity_model.pkl")
 
 print("Model Saved Successfully!")
+
+
+                          ## matrix graph plot
+import os
+import matplotlib.pyplot as plt
+from sklearn.metrics import ConfusionMatrixDisplay, confusion_matrix
+
+# Confusion Matrix Calculate Karein
+y_pred = model.predict(X_test)
+cm = confusion_matrix(y_test, y_pred)
+
+# Labels set karein (apne dataset CSVs ke according)
+labels = ["sitting", "standing", "walking", "waving"]
+
+disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=labels)
+
+# Chart Format aur Style
+fig, ax = plt.subplots(figsize=(7, 6))
+disp.plot(cmap="Blues", ax=ax, values_format="d")
+plt.title("Confusion Matrix - Human Activity Recognition", fontsize=12)
+
+# Outputs folder mai save karein
+output_dir = os.path.join(os.path.dirname(__file__), "..", "outputs")
+os.makedirs(output_dir, exist_ok=True)
+output_path = os.path.join(output_dir, "confusion_matrix.png")
+
+plt.savefig(output_path, dpi=300, bbox_inches="tight")
+plt.show()
+
+print(f"Chart saved successfully at: {output_path}")
